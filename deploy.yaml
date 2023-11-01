@@ -1,0 +1,163 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: my-sls-app
+Transform:
+- AWS::Serverless-2016-10-31
+Resources:
+  getAllItemsFunctionToTableConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: getAllItemsFunction
+      Destination:
+        Id: SampleTable
+      Permissions:
+      - Read
+    Metadata:
+      SamResourceId: getAllItemsFunctionToTableConnector
+  getByIdFunctionToTableConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: getByIdFunction
+      Destination:
+        Id: SampleTable
+      Permissions:
+      - Read
+    Metadata:
+      SamResourceId: getByIdFunctionToTableConnector
+  putItemFunctionToTableConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: putItemFunction
+      Destination:
+        Id: SampleTable
+      Permissions:
+      - Write
+    Metadata:
+      SamResourceId: putItemFunctionToTableConnector
+  TransportTubeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-1wnukfkhsf9xf/74cf02edd6d32d2177c9e68bde3729c4
+      Handler: main.lambda_handler
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 100
+      Description: Your function description here
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        TransportTubeApi:
+          Type: Api
+          Properties:
+            Path: /transporttube
+            Method: GET
+    Metadata:
+      SamResourceId: TransportTubeFunction
+  getAllItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get_all_items.getAllItemsHandler
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP get method to get all items from
+        a DynamoDB table.
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: GET
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-1wnukfkhsf9xf/58b1466107b1c14aaa76f584b7206742
+    Metadata:
+      SamResourceId: getAllItemsFunction
+  getByIdFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/get_by_id.getByIdHandler
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP get method to get one item by
+        id from a DynamoDB table.
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /{id}
+            Method: GET
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-1wnukfkhsf9xf/58b1466107b1c14aaa76f584b7206742
+    Metadata:
+      SamResourceId: getByIdFunction
+  putItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/put_item.putItemHandler
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP post method to add one item to
+        a DynamoDB table.
+      Environment:
+        Variables:
+          SAMPLE_TABLE:
+            Ref: SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-1wnukfkhsf9xf/58b1466107b1c14aaa76f584b7206742
+    Metadata:
+      SamResourceId: putItemFunction
+  SampleTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: id
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2
+    Metadata:
+      SamResourceId: SampleTable
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+    Metadata:
+      SamResourceId: ApplicationResourceGroup
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+    Metadata:
+      SamResourceId: ApplicationInsightsMonitoring
+Outputs:
+  WebEndpoint:
+    Description: API Gateway endpoint URL for Prod stage
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+Globals:
+  Function:
+    Tracing: Active
+  Api:
+    TracingEnabled: true
