@@ -15,5 +15,4 @@ The main objective of this project is to create a data integration pipeline that
 * Writing and deploying code - **[Visual Studio Code](https://code.visualstudio.com/)**
 * Testing Lambda function locally, packaging and deploying the function to AWS - **[AWS SAM CLI](https://aws.amazon.com/serverless/sam/)**
 
-## Deployment
 
